@@ -60,7 +60,9 @@
     /* Timer */
     .timer-container { width: 100%; height: 6px; background: var(--border-color); position: absolute; top: 0; left: 0; }
     .timer-bar { width: 100%; height: 100%; background: var(--primary); }
-    .animate-timer { animation: countdown 15s linear forwards; }
+    
+    /* ACTUALIZADO: Sincronizado a 25 segundos */
+    .animate-timer { animation: countdown 25s linear forwards; }
     @keyframes countdown { from { width: 100%; } to { width: 0%; } }
 
     /* Opciones */
@@ -125,7 +127,6 @@
   </div>
 
 <script>
-  // ⚠️ TU URL DE GOOGLE APPS SCRIPT AQUÍ ⚠️
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw69x0Dn-ypruAQzYlLstORveZQYiffrrynHE4PR8OSo6DYRVPR2iL3GW5V8Rwcz5fh_Q/exec";
 
   let questions = []; 
@@ -206,6 +207,8 @@
     timerBar.classList.add('animate-timer');
 
     clearTimeout(timerTimeout);
+    
+    // ACTUALIZADO: Lógica de 25 segundos (25000ms)
     timerTimeout = setTimeout(() => sendAnswer(-1), 25000);
 
     const area = document.getElementById('options-area');
@@ -228,12 +231,14 @@
     const solutionBox = document.getElementById('fb-solution');
     const correctTextLabel = document.getElementById('correct-answer-text');
 
-    // Ocultar caja de solución por defecto
     solutionBox.style.display = "none";
 
     if (selectedIdx === q.ans) {
       const elapsed = (Date.now() - currentQStart) / 1000;
-      points = Math.max(500, Math.round(1500 - (elapsed * 60))); 
+      
+      // ACTUALIZADO: Multiplicador a 40 para adaptarse a los 25 segundos
+      points = Math.max(500, Math.round(1500 - (elapsed * 40))); 
+      
       fbCard.className = "card bg-green";
       document.getElementById('fb-icon').innerText = "😎";
       document.getElementById('fb-title').innerText = "¡CORRECTO!";
@@ -244,7 +249,6 @@
       document.getElementById('fb-title').innerText = selectedIdx === -1 ? "TIEMPO AGOTADO" : "INCORRECTO";
       document.getElementById('fb-points').innerText = "0 pts";
 
-      // Revelar respuesta correcta
       correctTextLabel.innerText = q.opts[q.ans];
       solutionBox.style.display = "block";
     }
@@ -256,8 +260,6 @@
     fetch(SCRIPT_URL, { method:'POST', body:fd });
 
     switchView('view-feedback');
-    
-    // 2.5 segundos para que alcancen a leer la respuesta si fallaron
     setTimeout(nextQuestion, 2500);
   }
 
