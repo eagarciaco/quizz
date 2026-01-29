@@ -206,7 +206,7 @@
     timerBar.classList.add('animate-timer');
 
     clearTimeout(timerTimeout);
-    timerTimeout = setTimeout(() => sendAnswer(-1), 15000);
+    timerTimeout = setTimeout(() => sendAnswer(-1), 25000);
 
     const area = document.getElementById('options-area');
     const validOpts = q.opts.filter(opt => opt !== "");
