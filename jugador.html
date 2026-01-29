@@ -16,6 +16,7 @@
       --primary-hover: #4f46e5;
       --accent-green: #10b981;
       --accent-red: #ef4444;
+      --accent-gold: #fbbf24;
       --border-color: #334155;
       --input-bg: #0f172a;
       --radius: 16px;
@@ -74,6 +75,15 @@
     .status-icon { font-size: 5rem; margin-bottom: 10px; }
     .bg-green { background: var(--accent-green) !important; color: white !important; }
     .bg-red { background: var(--accent-red) !important; color: white !important; }
+    
+    .solution-box {
+      margin: 15px 0; 
+      padding: 12px; 
+      background: rgba(255,255,255,0.08); 
+      border-radius: 10px; 
+      border-left: 4px solid var(--accent-gold);
+      text-align: left;
+    }
   </style>
 </head>
 <body>
@@ -105,18 +115,23 @@
     <div id="fb-icon" class="status-icon"></div>
     <h2 id="fb-title"></h2>
     <h3 id="fb-points"></h3>
-    <p>La carrera continúa...</p>
+    
+    <div id="fb-solution" class="solution-box" style="display: none;">
+      <small style="opacity: 0.7; display: block; margin-bottom: 4px;">La respuesta correcta era:</small>
+      <b id="correct-answer-text" style="color: var(--accent-gold); font-size: 1.1rem;"></b>
+    </div>
+
+    <p style="font-size: 0.9rem; opacity: 0.6; margin-top: 15px;">La carrera continúa pronto...</p>
   </div>
 
 <script>
   // ⚠️ TU URL DE GOOGLE APPS SCRIPT AQUÍ ⚠️
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw69x0Dn-ypruAQzYlLstORveZQYiffrrynHE4PR8OSo6DYRVPR2iL3GW5V8Rwcz5fh_Q/exec";
 
-  let questions = []; // Se llenará desde el servidor
+  let questions = []; 
   let myName = "", myAvatar = "👽", currentLocalIdx = -1, hasStarted = false;
   let timerTimeout, currentQStart = 0, pollInterval;
 
-  // Selección de Avatar
   document.querySelectorAll('.emoji-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
@@ -136,7 +151,6 @@
     fetch(SCRIPT_URL, { method:'POST', body:fd });
     
     switchView('view-wait');
-    // Polling rápido para detectar el inicio e ir cargando las preguntas
     pollInterval = setInterval(pollServer, 800);
   }
 
@@ -145,17 +159,15 @@
       const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
       const data = await res.json();
       
-      // CARGAR PREGUNTAS DESDE EL EXCEL (si aún no las tenemos)
       if (data.questions && questions.length === 0) {
         questions = data.questions;
         document.getElementById('wait-desc').innerText = "Preguntas listas. ¡Prepárate!";
       }
 
-      // INICIAR JUEGO
       if (data.state === "JUEGO" && !hasStarted && questions.length > 0) {
         hasStarted = true;
         clearInterval(pollInterval);
-        pollInterval = setInterval(pollServer, 4000); // Bajamos ritmo en juego
+        pollInterval = setInterval(pollServer, 4000);
         nextQuestion();
       }
 
@@ -197,7 +209,6 @@
     timerTimeout = setTimeout(() => sendAnswer(-1), 15000);
 
     const area = document.getElementById('options-area');
-    // Filtramos opciones vacías por si hay celdas en blanco en el Excel
     const validOpts = q.opts.filter(opt => opt !== "");
     
     area.innerHTML = validOpts.map((opt, i) => 
@@ -214,6 +225,12 @@
     let points = 0;
     
     const fbCard = document.getElementById('view-feedback');
+    const solutionBox = document.getElementById('fb-solution');
+    const correctTextLabel = document.getElementById('correct-answer-text');
+
+    // Ocultar caja de solución por defecto
+    solutionBox.style.display = "none";
+
     if (selectedIdx === q.ans) {
       const elapsed = (Date.now() - currentQStart) / 1000;
       points = Math.max(500, Math.round(1500 - (elapsed * 60))); 
@@ -226,6 +243,10 @@
       document.getElementById('fb-icon').innerText = selectedIdx === -1 ? "⏰" : "😢";
       document.getElementById('fb-title').innerText = selectedIdx === -1 ? "TIEMPO AGOTADO" : "INCORRECTO";
       document.getElementById('fb-points').innerText = "0 pts";
+
+      // Revelar respuesta correcta
+      correctTextLabel.innerText = q.opts[q.ans];
+      solutionBox.style.display = "block";
     }
 
     const fd = new FormData();
@@ -235,7 +256,9 @@
     fetch(SCRIPT_URL, { method:'POST', body:fd });
 
     switchView('view-feedback');
-    setTimeout(nextQuestion, 1800);
+    
+    // 2.5 segundos para que alcancen a leer la respuesta si fallaron
+    setTimeout(nextQuestion, 2500);
   }
 
   function switchView(id) {
